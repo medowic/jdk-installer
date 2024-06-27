@@ -4,7 +4,7 @@ This is **Java Development Kit** installer for Linux Debian-based system (Debian
 > This script only works with JDKs which is distributed under the [Oracle No-Fee Terms and Conditions License](https://java.com/freeuselicense) (**JDK 17 and later**).
 # Install
 ```shell
-wget -O https://raw.githubusercontent.com/medowic/jdk-installer/master/jdk-i.sh
+wget -O jdk-i.sh https://raw.githubusercontent.com/medowic/jdk-installer/master/jdk-i.sh
 chmod +x jdk-i.sh
 ```
 # Usage
