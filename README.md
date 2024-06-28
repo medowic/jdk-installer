@@ -1,7 +1,7 @@
 # jdk-installer
 This is **Java Development Kit** installer for Linux Debian-based system (Debian, Ubuntu). All JDKs downloads from [offical Oracle's website](https://www.oracle.com/java/technologies/downloads/). Script is fully automatic. You just need to choose a version and chill out.
 > [!IMPORTANT]
-> This script only works with JDKs which is distributed under the [Oracle No-Fee Terms and Conditions License](https://java.com/freeuselicense) (**JDK 17 and later**).
+> Online install only works with JDKs which is distributed under the [Oracle No-Fee Terms and Conditions License](https://java.com/freeuselicense) (**JDK 17 and later**).
 # Install
 ```shell
 wget -O jdk-i.sh https://raw.githubusercontent.com/medowic/jdk-installer/master/jdk-i.sh
@@ -20,6 +20,12 @@ This command will install **JDK 21.0.1**
 This command will install **JDK 21**, **but during the installation process**, the script will ask you which version to install: the Latest or the Oldest (because this is the LTS version)
 ```shell
 ./jdk-i.sh 21
+```
+This command will install **JDK from .deb-package** (offline install)
+> [!IMPORTANT]
+> Offline install only works with .deb-packages
+```shell
+./jdk-i.sh /path/to/jdk.deb
 ```
 # License
 This is project is under the [MIT License](https://raw.githubusercontent.com/medowic/jdk-installer/master/LICENSE).
