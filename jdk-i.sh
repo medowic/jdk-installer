@@ -11,87 +11,109 @@ function selectMenu {
             echo "[ ] ${options[${i}]}";
         fi
     done
+    echo ""
+}
+
+function uninstallJava() {
+    echo "Uninstall JDK..."
+    
+    VERSION_JDK=$(java -version 2>&1 | grep 'version' | cut -d '"' -f2 | cut -d '.' -f1)
+
+    apt purge jdk-"${VERSION_JDK}" -y >/dev/null 2>&1
+    apt autoremove -y >/dev/null 2>&1
+
+    update-alternatives --remove java /usr/lib/jvm/jdk-"${VERSION_JDK}"/bin/java >/dev/null 2>&1
+    update-alternatives --remove javac /usr/lib/jvm/jdk-"${VERSION_JDK}"/bin/javac >/dev/null 2>&1
 }
 
 function installPackage() {
+    if java -version >/dev/null 2>&1; then
+        echo "Found another version of JDK. Deleting it...";
+        uninstallJava >/dev/null 2>&1;
+    fi
+
     # Installation
     if [ -z "${1}" ]; then
+        echo "Installing JDK...";
         apt install /tmp/jdk-install.deb -y >/dev/null 2>&1;
     else
-        echo "Searching JDK ${1}...";
         echo "Installing from path (${1})";
-        MAJOR_VERSION=$(apt install "${1}" -y 2>&1 | grep jdk- | sed "1q;d" | awk '{print $1}' | cut -d '-' -f2);
+        VERSION_MAJOR=$(apt install "${1}" -y 2>&1 | grep jdk- | sed "1q;d" | awk '{print $1}' | cut -d '-' -f2);
     fi
 
     # Setting up JDK in alternatives
-    echo "Setting up JDK..."
-    update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-"${MAJOR_VERSION}"/bin/java 1 >/dev/null 2>&1
-    update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/jdk-"${MAJOR_VERSION}"/bin/javac 1 >/dev/null 2>&1
-    update-alternatives --set java /usr/lib/jvm/jdk-"${MAJOR_VERSION}"/bin/java >/dev/null 2>&1
-    update-alternatives --set javac /usr/lib/jvm/jdk-"${MAJOR_VERSION}"/bin/javac >/dev/null 2>&1
+    echo "Сonfiguring JDK..."
+    update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/java 1 >/dev/null 2>&1
+    update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/javac 1 >/dev/null 2>&1
+    update-alternatives --set java /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/java >/dev/null 2>&1
+    update-alternatives --set javac /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/javac >/dev/null 2>&1
 }
 
 function searchWebsite() {
     # Searching JDK version on server
     echo "Searching JDK ${VERSION}..."
 
-    wget --spider --quiet https://download.oracle.com/java/"${MAJOR_VERSION}"/latest/jdk-"${MAJOR_VERSION}"_linux-x64_bin.deb
+    wget --spider --quiet https://download.oracle.com/java/"${VERSION_MAJOR}"/latest/jdk-"${VERSION_MAJOR}"_linux-x64_bin.deb
     LATEST="${?}"
 
-    wget --spider --quiet https://download.oracle.com/java/"${MAJOR_VERSION}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb
+    wget --spider --quiet https://download.oracle.com/java/"${VERSION_MAJOR}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb
     ARCHIVE="${?}"
 
     if [ "${LATEST}" == "0" ] && [ "${ARCHIVE}" == "0" ]; then
-
-        options=("JDK ${VERSION} (Latest, as LTS)" "JDK ${VERSION} (Oldest, first version)")
-        selected=0
-
-        selectMenu
-        while true; do
-            read -rsn1 key
-            case "${key}" in
-                'A')
-                    selected=$(( (selected - 1 + ${#options[@]}) % ${#options[@]} ))
-                    selectMenu
-                    ;;
-                'B')
-                    selected=$(( (selected + 1) % ${#options[@]} ))
-                    selectMenu
-                    ;;
-                '')
-                    break
-                    ;;
-            esac
-        done
-
-        if [ "${options[selected]}" == "JDK ${VERSION} (Latest, LTS)" ]; then
-            echo "";
-            echo "Installing JDK...";
-            # Downloading from latest (LTS)
+        if [ "${VERSION_FLAG}" == "-l" ] || [ "${VERSION_FLAG}" == "--latest" ]; then
+            echo "Downloading latest version...";
             wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/latest/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
-        elif [ "${options[selected]}" == "JDK ${VERSION} (Oldest, first version)" ]; then
-            echo "";
-            echo "Installing JDK...";
-            # Downloading from archive (as first version of JDK, not latest)
-            wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
-        fi
+        elif [ "${VERSION_FLAG}" == "-o" ] || [ "${VERSION_FLAG}" == "--oldest" ]; then
+            echo "Downloading oldest version...";
+            wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION_MAJOR}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
+        else
+            options=("JDK ${VERSION} (Latest, as LTS)" "JDK ${VERSION} (Oldest, first version)")
+            selected=0
 
+            selectMenu
+            while true; do
+                read -rsn1 key
+                case "${key}" in
+                    'A')
+                        selected=$(( (selected - 1 + ${#options[@]}) % ${#options[@]} ))
+                        selectMenu
+                        ;;
+                    'B')
+                        selected=$(( (selected + 1) % ${#options[@]} ))
+                        selectMenu
+                        ;;
+                    '')
+                        break
+                        ;;
+                esac
+            done
+
+            if [ "${options[selected]}" == "JDK ${VERSION} (Latest, as LTS)" ]; then
+                echo "Downloading JDK ${VERSION} from Oracle's website...";
+                # Downloading from latest (LTS)
+                wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/latest/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
+            elif [ "${options[selected]}" == "JDK ${VERSION} (Oldest, first version)" ]; then
+                echo "";
+                echo "Downloading JDK ${VERSION} from Oracle's website...";
+                # Downloading from archive (as first version of JDK, not latest)
+                wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
+            fi
+        fi
 
     elif [ "${LATEST}" != "0" ] && [ "${ARCHIVE}" == "0" ]; then
         echo "";
-        echo "WARN: it will not be the latest version, you are only installing version ${VERSION} from archive";
+        echo "WARN: it will not be the latest version, you are only installing version ${VERSION} from Oralce's archive";
         echo "";
-        echo "Installing JDK ${VERSION}...";
+        echo "Downloading JDK ${VERSION} from Oracle's website...";
         # Downloading from archive (as first version of JDK, not latest)
-        wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${MAJOR_VERSION}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
+        wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION_MAJOR}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
     else
-        echo "ERROR: Couldn't find the specified JDK version on Oracle's website";
+        echo "ERROR: Couldn't find the specified JDK version";
         exit 1;
     fi
 }
 
 function checkInstall() {
-
     if [ -f /tmp/jdk-install.deb ]; then
         rm /tmp/jdk-install.deb >/dev/null 2>&1;
     fi
@@ -107,7 +129,7 @@ function checkInstall() {
         echo "ERROR: Oh, something went wrong...";
         echo "ERROR: Installation was failed. You can try again.";
         exit 1;
-fi
+    fi
 }
 
 tput reset
@@ -129,14 +151,26 @@ if [ "${OS}" != "ubuntu" ] && [ "${OS}" != "debian" ] && [ "${OS}" != "raspbian"
     exit 1;
 fi
 
-# Check first flag
+# Check flags
 if [ -n "${1}" ]; then
     if [ -f "${1}" ] && [[ ${1} == *.deb ]]; then
         installPackage "${1}";
         checkInstall;
+    elif [ "${1}" == "delete" ]; then
+        uninstallJava;
+        if ! java -version >/dev/null 2>&1; then
+            echo "Uninstall was successful";
+            echo "";
+            exit 0;
+        else
+            echo "ERROR: Something went wrong. JDK isn't uninstalled.";
+            echo "";
+            exit 1;
+        fi
     else
         VERSION="${1}";
-        MAJOR_VERSION=$(echo "${VERSION}" | cut -d '.' -f1);
+        VERSION_MAJOR=$(echo "${VERSION}" | cut -d '.' -f1);
+        VERSION_FLAG="${2}";
         searchWebsite;
         installPackage;
         checkInstall;
