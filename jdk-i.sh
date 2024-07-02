@@ -15,8 +15,9 @@ function selectMenu {
 }
 
 function uninstallJava() {
+    # Uninstall JDK that installed on machine
     echo "Uninstall JDK..."
-    
+
     VERSION_JDK=$(java -version 2>&1 | grep 'version' | cut -d '"' -f2 | cut -d '.' -f1)
 
     apt purge jdk-"${VERSION_JDK}" -y >/dev/null 2>&1
@@ -27,12 +28,13 @@ function uninstallJava() {
 }
 
 function installPackage() {
+    # Deleting another version, if exist
     if java -version >/dev/null 2>&1; then
         echo "Found another version of JDK. Deleting it...";
         uninstallJava >/dev/null 2>&1;
     fi
 
-    # Installation
+    # Check installation file location and installing
     if [ -z "${1}" ]; then
         echo "Installing JDK...";
         apt install /tmp/jdk-install.deb -y >/dev/null 2>&1;
@@ -41,7 +43,7 @@ function installPackage() {
         VERSION_MAJOR=$(apt install "${1}" -y 2>&1 | grep jdk- | sed "1q;d" | awk '{print $1}' | cut -d '-' -f2);
     fi
 
-    # Setting up JDK in alternatives
+    # Configuring JDK in alternatives
     echo "Сonfiguring JDK..."
     update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/java 1 >/dev/null 2>&1
     update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/jdk-"${VERSION_MAJOR}"/bin/javac 1 >/dev/null 2>&1
@@ -67,7 +69,7 @@ function searchWebsite() {
             echo "Downloading oldest version...";
             wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION_MAJOR}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
         else
-            options=("JDK ${VERSION} (Latest, as LTS)" "JDK ${VERSION} (Oldest, first version)")
+            options=("JDK ${VERSION} (Latest)" "JDK ${VERSION} (Oldest, first version)")
             selected=0
 
             selectMenu
@@ -88,13 +90,13 @@ function searchWebsite() {
                 esac
             done
 
-            if [ "${options[selected]}" == "JDK ${VERSION} (Latest, as LTS)" ]; then
-                echo "Downloading JDK ${VERSION} from Oracle's website...";
-                # Downloading from latest (LTS)
+            if [ "${options[selected]}" == "JDK ${VERSION} (Latest)" ]; then
+                echo "Downloading latest JDK ${VERSION} from Oracle's website...";
+                # Downloading from latest
                 wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/latest/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
             elif [ "${options[selected]}" == "JDK ${VERSION} (Oldest, first version)" ]; then
                 echo "";
-                echo "Downloading JDK ${VERSION} from Oracle's website...";
+                echo "Downloading oldest JDK ${VERSION} from Oracle's website...";
                 # Downloading from archive (as first version of JDK, not latest)
                 wget -O /tmp/jdk-install.deb https://download.oracle.com/java/"${VERSION}"/archive/jdk-"${VERSION}"_linux-x64_bin.deb >/dev/null 2>&1;
             fi
@@ -114,10 +116,12 @@ function searchWebsite() {
 }
 
 function checkInstall() {
+    # Deleting installation file, if exist
     if [ -f /tmp/jdk-install.deb ]; then
         rm /tmp/jdk-install.deb >/dev/null 2>&1;
     fi
 
+    # Check installation and finish
     if java -version >/dev/null 2>&1; then
         echo "";
         echo "Setup was successful! Here is your 'java -version'";
@@ -132,6 +136,7 @@ function checkInstall() {
     fi
 }
 
+# Start of script
 tput reset
 echo "Java Development Kit (JDK) installer for Linux"
 echo ""
