@@ -12,7 +12,7 @@ Before you start script you must to choose a JDK version and write it in first f
 ```shell
 ./jdk-i.sh [JDK-VERSION] [FLAGS]
 ```
-> [!NOTE]
+> [!WARNING]
 > If another version of JDK is found, it will be deleted and the JDK version that was specified will be installed
 ## Versions
 ### Examples:
@@ -20,7 +20,9 @@ This command will install **JDK 21.0.1**
 ```shell
 ./jdk-i.sh 21.0.1
 ```
-This command will install **JDK 21**, **but during the installation process**, the script will ask you which version to install: the Latest or the Oldest (because this is the LTS version)
+This command will install **JDK 21**, **but during the installation process**, the script will ask you which version to install: the latest (21.0.4+, for exapmle) or the oldest (21) 
+> [!NOTE]
+> This exception works if it's only the LTS version
 ```shell
 ./jdk-i.sh 21
 ```
@@ -35,11 +37,11 @@ This command will install **JDK from .deb-package** (offline install)
 - `--latest` / `-l` - Install **latest** version of JDK, (if it's LTS version, for example)
 - `--oldest` / `-o` - Install **oldest (first)** version of JDK, (if it's LTS version, for example)
 ### Examples:
-This command will install **oldest (first)** JDK version
+This command will install **oldest (21)** JDK version
 ```shell
 ./jdk-i.sh 21 --oldest
 ```
-This command will install **latest JDK** version
+This command will install **latest (21.0.4+)** JDK version
 ```shell
 ./jdk-i.sh 21 --latest
 ```
